@@ -6,8 +6,6 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/jinzhu/gorm"
-
 	"github.com/cyub/go-kit-demo/account/model"
 	"github.com/cyub/go-kit-demo/account/router"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -19,8 +17,6 @@ const (
 	appVersion   = "0.1"
 	appBuildTime = "2020-02-18"
 )
-
-var db *gorm.DB
 
 func init() {
 	var (
