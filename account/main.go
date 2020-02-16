@@ -2,14 +2,14 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"log"
 	"net/http"
+	"os"
 
 	"github.com/cyub/go-kit-demo/account/model"
 	"github.com/cyub/go-kit-demo/account/router"
+	"github.com/cyub/go-kit-demo/account/service"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
-	"github.com/spf13/viper"
+	log "github.com/sirupsen/logrus"
 )
 
 const (
@@ -20,40 +20,48 @@ const (
 
 func init() {
 	var (
-		consulHost  = flag.String("consul.host", "", "consul ip address")
-		consulPort  = flag.String("consul.port", "", "consul port")
-		serviceHost = flag.String("service.host", "8500", "service ip address")
-		servicePort = flag.String("service.port", "8888", "service port")
-		dbHost      = flag.String("mysql.host", "", "mysql ip address")
-		dbPort      = flag.Int("mysql.port", 3360, "mysql port")
-		dbUser      = flag.String("mysql.user", "", "mysql user")
-		dbPasswd    = flag.String("mysql.passwd", "", "mysql password")
-		dbDB        = flag.String("mysql.db", "", "mysql database")
+		consulHost = flag.String("consul.host", "consul", "consul ip address")
+		consulPort = flag.Int("consul.port", 8500, "consul port")
+		appHost    = flag.String("app.host", "8500", "app ip address")
+		appPort    = flag.Int("app.port", 8888, "app port")
+		appEnv     = flag.String("app.env", "dev", "app env")
 	)
 	flag.Parse()
 
-	viper.Set("appName", appName)
-	viper.Set("appVersion", appVersion)
-	viper.Set("appBuildTime", appBuildTime)
-	viper.Set("consulHost", *consulHost)
-	viper.Set("consulPort", *consulPort)
-	viper.Set("serviceHost", *serviceHost)
-	viper.Set("servicePort", *servicePort)
-	viper.Set("dbHost", *dbHost)
-	viper.Set("dbPort", *dbPort)
-	viper.Set("dbUser", *dbUser)
-	viper.Set("dbPasswd", *dbPasswd)
-	viper.Set("dbDB", *dbDB)
+	conf := service.NewConfig(
+		*consulHost,
+		*consulPort,
+		appName,
+		*appEnv,
+		5)
+	// 存储变量
+	conf.Set("appName", appName)
+	conf.Set("appVersion", appVersion)
+	conf.Set("appBuildTime", appBuildTime)
+	conf.Set("appHost", *appHost)
+	conf.Set("appPort", *appPort)
+	conf.Set("appEnv", *appEnv)
+	conf.Set("consulHost", *consulHost)
+	conf.Set("consulPort", *consulPort)
+	// 加载配置
+	conf.Load()
+
+	// 日志配置
+	log.SetOutput(os.Stdout)
+	log.SetFormatter(&log.TextFormatter{
+		FullTimestamp: true,
+	})
+	log.SetLevel(log.InfoLevel)
 }
 
 func main() {
 	// 连接数据库
 	dbConf := model.MysqlConnectConf{
-		Host:   viper.GetString("dbHost"),
-		Port:   viper.GetInt("dbPort"),
-		User:   viper.GetString("dbUser"),
-		Passwd: viper.GetString("dbPasswd"),
-		DB:     viper.GetString("dbDB"),
+		Host:   service.C.GetString("MYSQL_HOST"),
+		Port:   service.C.GetInt("MYSQL_PORT"),
+		User:   service.C.GetString("MYSQL_USER"),
+		Passwd: service.C.GetString("MYSQL_PASSWD"),
+		DB:     service.C.GetString("MYSQL_DB"),
 	}
 	model.SetUp(dbConf)
 	// 迁移数据
@@ -65,8 +73,8 @@ func main() {
 	errChan := make(chan error)
 	go func() {
 		r := router.NewRouter()
-		fmt.Printf("Http server listen at:%s", viper.GetString("servicePort"))
-		errChan <- http.ListenAndServe(":"+viper.GetString("servicePort"), r)
+		log.Info("Http server listen at:" + service.C.GetString("appPort"))
+		errChan <- http.ListenAndServe(":"+service.C.GetString("appPort"), r)
 	}()
 
 	err := <-errChan

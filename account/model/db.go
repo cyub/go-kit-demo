@@ -2,10 +2,10 @@ package model
 
 import (
 	"fmt"
-	"log"
 	"os"
 
 	"github.com/jinzhu/gorm"
+	log "github.com/sirupsen/logrus"
 )
 
 var db *gorm.DB
@@ -14,7 +14,7 @@ var db *gorm.DB
 func SetUp(conf MysqlConnectConf) {
 	dbHandle, err := DBConnect(conf)
 	if err != nil {
-		log.Fatal("connect db failure:" + err.Error())
+		log.Fatal("connect db failure " + err.Error())
 		os.Exit(1)
 	}
 	db = dbHandle
