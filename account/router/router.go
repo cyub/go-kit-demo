@@ -1,9 +1,11 @@
 package router
 
-import "github.com/gorilla/mux"
+import (
+	"github.com/gorilla/mux"
+)
 
 // NewRouter create a pointer to mux.Router
-func NewRouter() *mux.Router {
+func New() *mux.Router {
 	r := mux.NewRouter()
 	for _, route := range routes {
 		r.Path(route.Pattern).

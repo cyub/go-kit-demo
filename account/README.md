@@ -36,6 +36,49 @@ docker-compose up -d
 说明：应用配置以key-value形式存储，存储在`config/application_name,applicaton_env/`目录。比如应用名称demo，项目运行环境是测试环境(test)，则目录名称是`config/demo,test`
 
 
+### 安装与配置prometheus和grafana
+
+1. 启动prometheus和grafana
+
+```
+docker-compose up -d
+```
+2. prometheus配置：
+
+编辑`prometheus.yml`
+
+```
+- job_name: 'go-kit-demo-account'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['192.168.33.10:8888']
+        labels:
+          group: 'demo'
+```
+
+3. prometheus查询语句
+
+qps:
+
+```
+sum by (path) (rate(go_kit_demo_account_http_requests_total[5m]))
+```
+
+响应速度：
+
+```
+sum(rate(go_kit_demo_account_http_request_duration_seconds_sum[5m])/rate(go_kit_demo_account_http_request_duration_seconds_count[5m]))
+```
+
+响应时间中位百分比：
+
+```
+histogram_quantile(
+  0.5,
+  sum by (le) (rate(go_kit_demo_account_http_request_duration_seconds_bucket[5m]))
+)
+```
+
 ### 构建应用
 
 ```

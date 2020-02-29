@@ -72,7 +72,8 @@ func main() {
 	// 启动http服务
 	errChan := make(chan error)
 	go func() {
-		r := router.NewRouter()
+		r := router.New()
+		r.Use(service.WithMetric(r))
 		log.Info("Http server listen at:" + service.C.GetString("appPort"))
 		errChan <- http.ListenAndServe(":"+service.C.GetString("appPort"), r)
 	}()

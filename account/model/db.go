@@ -56,7 +56,8 @@ func DBConnect(conf MysqlConnectConf) (db *gorm.DB, err error) {
 
 	db.SingularTable(true)
 	db.LogMode(true)
-	db.DB().SetMaxIdleConns(3)
-	db.DB().SetMaxOpenConns(10)
+	db.DB().SetMaxIdleConns(10)
+	db.DB().SetMaxOpenConns(50)
+	db.DB().SetConnMaxLifetime(5 * 30) // 注意与mysql参数wait_timeout有关
 	return
 }
